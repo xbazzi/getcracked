@@ -6,72 +6,69 @@
 // You do NOT need to add your own includes here.                         //
 // /////////////////////////////////////////////////////////////////////////
 
-namespace getcracked 
+namespace getcracked
 {
     template <typename T>
     struct custom_deleter
     {
-        void operator()(T* pointer) const
+        void operator()(T *pointer) const
         {
             delete pointer;
         }
     };
 
     template <typename T, typename custom_deleter = custom_deleter<T>>
-    class unique_ptr
+    class unique_ptr : private custom_deleter
     {
+        static_assert(
+            !(std::is_array_v<T> || std::is_bounded_array_v<T>),
+            "dem arrays is forbidden 💅 sir");
 
     private:
-        T* m_data;
+        T *p_data;
+
     public:
-        unique_ptr() : m_data{nullptr} {}
-        unique_ptr(T* pointer) : m_data{pointer}
+        unique_ptr() : p_data{nullptr} {}
+        unique_ptr(T *pointer) : p_data{pointer} {}
 
-        unique_ptr(const unique_ptr&) {
-            throw std::logic_error("u trippin tryna copy a unique ptr n shi lmao");
-         };
-        unique_ptr& operator=(const unique_ptr&) {
-            throw std::logic_error("good one bro");
-         };
+        unique_ptr(const unique_ptr &) { throw std::logic_error("u trippin tryna copy a unique ptr lmao"); }
+        unique_ptr &operator=(const unique_ptr &) { throw std::logic_error("good one bro"); }
 
-        unique_ptr(unique_ptr&& other) noexcept
-            : m_data{other.m_data}
+        unique_ptr(unique_ptr &&other) noexcept : p_data{other.p_data}
         {
-            other.m_data = nullptr;
+            p_data = other.p_data;
+            other.p_data = nullptr;
         }
 
-        unique_ptr& operator=(unique_ptr&& other) noexcept
+        unique_ptr &operator=(unique_ptr &&other) noexcept
         {
-            if (this != other)
+            if (this != &other)
             {
-                this->reset(nullptr);
-                this->m_data = other.m_data;
-                other.reset(nullptr);
+                this->reset();
+                this->p_data = other.p_data;
+                other.p_data = nullptr;
             }
             return *this;
         }
+        ~unique_ptr() { reset(); }
 
-        ~unique_ptr()
+        T *release()
         {
-
+            auto tmp = p_data;
+            p_data = nullptr;
+            return tmp;
         }
 
-        T* release()
+        void reset(T *pointer = nullptr)
         {
-
+            if (this != nullptr && p_data)
+                this->operator ()(p_data);
+            p_data = pointer;
         }
 
-        void reset(T* pointer)
-        {
-
-        }
-
-        bool is_owning() const { }
-
-
-        T& operator*() const { }
-        T* operator->() const { }
-        operator bool() const { }
-
+        bool is_owning() const { return this->operator bool(); }
+        T &operator*() const { return *p_data; }
+        T *operator->() const { return p_data; }
+        explicit operator bool() const { return p_data != nullptr; }
     };
 }

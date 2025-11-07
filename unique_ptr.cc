@@ -6,6 +6,10 @@
 // You do NOT need to add your own includes here.                         //
 // /////////////////////////////////////////////////////////////////////////
 
+#include <type_traits>
+#include <stdexcept>
+#include <cassert>
+
 namespace getcracked
 {
     template <typename T>
@@ -71,4 +75,23 @@ namespace getcracked
         T *operator->() const { return p_data; }
         explicit operator bool() const { return p_data != nullptr; }
     };
+}
+#include<iostream>
+using namespace std;
+
+int main()
+{
+
+    struct MyDeleter 
+    {
+        void operator()(int* t)
+        {
+            return;
+        }
+    };
+
+    int x = 2;
+    getcracked::unique_ptr<int> intptr(new int(x));
+    assert(*intptr == x);
+    return 0;
 }

@@ -33,9 +33,10 @@
         # devShell = pkgs.mkShell.override { stdenv = pkgs.clangStdenv; } rec {
         devShell = pkgs.mkShell {
           nativeBuildInputs = pyPkgs ++ (with pkgs; [
+            boost
             gbenchmark
-            gcc
             gtest
+            gcc
             binutils
             cmake
             gdb 

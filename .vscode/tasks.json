@@ -10,7 +10,7 @@
                 "-O0",
                 "${file}",
                 "-o",
-                "${fileDirname}/${fileBasenameNoExtension}",
+                "${fileDirname}/build/${fileBasenameNoExtension}",
                 "--std=c++23",
                 "-Wall",
                 "-fsanitize=address,undefined,leak"

@@ -5,12 +5,12 @@
 // 99% of includes / packages are already added for you.                  //
 // You do NOT need to add your own includes here.                         //
 // /////////////////////////////////////////////////////////////////////////
-#include <type_traits>
 #include <algorithm>
+#include <type_traits>
 
 namespace getcracked {
-    template <typename T>
-    constexpr decltype(auto) move(T&& t) noexcept {
-        return static_cast<std::remove_reference_t<T>&&>(t);
-    }
+template <typename T>
+constexpr decltype(auto) move(T&& t) noexcept {
+  return static_cast<std::remove_reference_t<T>&&>(t);
 }
+}  // namespace getcracked

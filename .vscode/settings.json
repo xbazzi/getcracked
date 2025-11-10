@@ -65,7 +65,27 @@
         "*.inc": "cpp",
         "condition_variable": "cpp",
         "semaphore": "cpp",
-        "thread": "cpp"
+        "thread": "cpp",
+        "any": "cpp",
+        "ranges": "cpp",
+        "valarray": "cpp",
+        "complex": "cpp",
+        "cassert": "cpp",
+        "cerrno": "cpp",
+        "cfloat": "cpp",
+        "ciso646": "cpp",
+        "climits": "cpp",
+        "forward_list": "cpp",
+        "map": "cpp",
+        "filesystem": "cpp",
+        "source_location": "cpp",
+        "ios": "cpp",
+        "locale": "cpp",
+        "queue": "cpp",
+        "cinttypes": "cpp",
+        "cstdbool": "cpp",
+        "version": "cpp",
+        "print": "cpp"
     },
     "C_Cpp.default.compilerPath": "/nix/store/591apldfgm1gr238rbfc8ib0y1z8ng2y-gcc-wrapper-14-20241116/bin/g++"
 }

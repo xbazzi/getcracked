@@ -25,21 +25,22 @@
 #include <limits>
 #include <ranges>
 
-int*** GetSpace(size_t x, size_t y, size_t z) {
-    if (x <= 0 or y <= 0 or z <= 0) return nullptr;
+int*** GetSpace(size_t x, size_t y, size_t z)
+{
+    if (x == 0 or y == 0 or z == 0)
+        return nullptr;
 
     // Check for overflow
-    if (x > SIZE_MAX / y || x * y > SIZE_MAX / z) return nullptr;
+    if (x > SIZE_MAX / y or x * y > SIZE_MAX / z)
+        return nullptr;
 
     auto arr = new int**[z];
-    for (size_t j{}; j < z; ++j)
-    {
+    for (size_t j {}; j < z; ++j) {
         arr[j] = new int*[y];
-        for (size_t k{}; k < y; ++k)
-        {
+        for (size_t k {}; k < y; ++k) {
             arr[j][k] = new int[x];
             std::ranges::fill(arr[j][k], arr[j][k] + x,
-                              std::numeric_limits<int>::min());
+                std::numeric_limits<int>::min());
         }
     }
 
@@ -47,22 +48,21 @@ int*** GetSpace(size_t x, size_t y, size_t z) {
 }
 
 #include <iostream>
-int main() {
-    int z      = 10;
-    int x      = 10;
-    int y      = 10;
+int main()
+{
+    int z = 10;
+    int x = 10;
+    int y = 10;
     auto space = GetSpace(x, y, z);
     std::ranges::for_each(space[0][0], space[0][0] + z,
-                          [](auto el) { std::cout << el << '\n'; });
+        [](auto el) { std::cout << el << '\n'; });
     // Properly deallocate all three dimensions
-    for (size_t i{}; i < x; ++i)
-    {
-        for (size_t j{}; j < y; ++j)
-        {
-            delete[] space[i][j];  // Delete innermost (z dimension)
+    for (size_t i {}; i < x; ++i) {
+        for (size_t j {}; j < y; ++j) {
+            delete[] space[i][j]; // Delete innermost (z dimension)
         }
-        delete[] space[i];  // Delete middle layer (y dimension)
+        delete[] space[i]; // Delete middle layer (y dimension)
     }
-    delete[] space;  // Delete outermost layer (x dimension)
+    delete[] space; // Delete outermost layer (x dimension)
     return EXIT_SUCCESS;
 }

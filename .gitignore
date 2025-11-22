@@ -3,3 +3,4 @@ ouput
 .direnv
 .envrc
 build/
+*.csv

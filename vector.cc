@@ -17,17 +17,17 @@
 #include <string>
 #include <type_traits>
 
-void *operator new(std::size_t size)
+void* operator new(std::size_t size)
 {
-    void *ptr = std::malloc(size); // Most implementations use malloc
+    void* ptr = std::malloc(size); // Most implementations use malloc
     if (!ptr)
         throw std::bad_alloc();
     std::fprintf(stderr, "[ALLOC] %zu bytes at %p\n", size,
-                 ptr); // Use stderr to avoid recursion
+        ptr); // Use stderr to avoid recursion
     return ptr;
 }
 
-void operator delete(void *ptr) noexcept
+void operator delete(void* ptr) noexcept
 {
     if (!ptr)
         return;
@@ -36,7 +36,7 @@ void operator delete(void *ptr) noexcept
 }
 
 // overload for when compiler can determine the size ahead of the call
-void operator delete(void *ptr, std::size_t size) noexcept
+void operator delete(void* ptr, std::size_t size) noexcept
 {
     if (!ptr)
         return;
@@ -44,33 +44,30 @@ void operator delete(void *ptr, std::size_t size) noexcept
     std::free(ptr);
 }
 
-namespace getcracked
-{
-template <typename Element> class vector
-{
-  private:
-    std::uint64_t m_size{0};
-    std::uint64_t m_cap{1};
-    Element *p_arr{nullptr};
+namespace getcracked {
+template <typename Element>
+class vector {
+private:
+    std::uint64_t m_size { 0 };
+    std::uint64_t m_cap { 1 };
+    Element* p_arr { nullptr };
 
-    static Element *_allocate(std::uint64_t alloc_size)
+    static Element* _allocate(std::uint64_t alloc_size)
     {
         if (alloc_size == 0)
             return nullptr;
-        return static_cast<Element *>(::operator new(sizeof(Element) * alloc_size));
+        std::cout << "Allocating: " << alloc_size << std::endl;
+        return static_cast<Element*>(::operator new(sizeof(Element) * alloc_size));
     }
 
     void _grow_capacity(std::uint64_t new_cap)
     {
-        Element *new_arr = _allocate(new_cap);
+        Element* new_arr = _allocate(new_cap);
         std::size_t i = 0;
-        try
-        {
+        try {
             for (; i < m_size; ++i)
                 std::construct_at(new_arr + i, std::move_if_noexcept(p_arr[i]));
-        }
-        catch (...)
-        {
+        } catch (...) {
             std::destroy_n(new_arr, i);
             ::operator delete(new_arr);
             throw;
@@ -84,25 +81,26 @@ template <typename Element> class vector
 
     void _destroy_and_free()
     {
-        if (p_arr)
-        {
+        if (p_arr) {
             std::destroy_n(p_arr, m_size);
             ::operator delete(p_arr);
         }
         return;
     }
 
-  public:
-    vector() : m_size{0}, p_arr{static_cast<Element *>(::operator new(sizeof(Element)))}
+public:
+    vector()
+        : m_size { 0 }
+        , p_arr { static_cast<Element*>(::operator new(sizeof(Element))) }
     {
     }
 
-    vector(std::uint64_t size) : m_size{size}
+    vector(std::uint64_t size)
+        : m_size { size }
     {
         m_cap = std::max<std::uint64_t>(1ULL, size);
         p_arr = _allocate(m_cap);
-        for (std::uint64_t i = 0; i < size; ++i)
-        {
+        for (std::uint64_t i = 0; i < size; ++i) {
             std::construct_at(p_arr + i);
         }
     }
@@ -113,13 +111,14 @@ template <typename Element> class vector
         ::operator delete(p_arr);
     }
 
-    void push_back(Element element)
+    template <class T>
+    void push_back(T&& element)
     {
         if (m_cap == 1) [[unlikely]]
             _grow_capacity(m_cap * 3);
-        if (m_size + 1 == m_cap)
+        if (m_size >= m_cap)
             _grow_capacity(m_cap * 3);
-        Element *inserter = p_arr + m_size;
+        Element* inserter = p_arr + m_size;
 
         // "Tryhard version"
         // std::construct_at<std::remove_pointer_t<decltype(inserter)>>(inserter,
@@ -134,11 +133,11 @@ template <typename Element> class vector
         ++m_size;
     }
 
-    const Element &at(std::size_t index) const
+    const Element& at(std::size_t index) const
     {
         if (index >= m_size)
             throw std::out_of_range("u tripping");
-        return *(static_cast<Element *>(p_arr + index));
+        return *(static_cast<Element*>(p_arr + index));
     }
 
     std::size_t get_size() const

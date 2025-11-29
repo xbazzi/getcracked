@@ -1,10 +1,12 @@
 #include <atomic>
-#include <thread>
 #include <cstdint>
+#include <thread>
+#include <x86intrin.h>
 
 class Mutex {
 public:
-    void lock() {
+    void lock()
+    {
         // Fast path — try once
         if (!flag.test_and_set(std::memory_order_acquire))
             return;
@@ -15,8 +17,19 @@ public:
             for (int i = 0; i < 64; ++i) {
                 if (!flag.test(std::memory_order_relaxed)) {
                     if (!flag.test_and_set(std::memory_order_acquire))
-                        return;  // acquired lock
+                        return; // acquired lock
                 }
+                _mm_pause();
+                _mm_pause();
+                _mm_pause();
+                _mm_pause();
+                _mm_pause();
+                _mm_pause();
+                _mm_pause();
+                _mm_pause();
+                _mm_pause();
+                _mm_pause();
+                _mm_pause();
                 // Optional architecture pause hint (x86: _mm_pause())
             }
 
@@ -25,7 +38,8 @@ public:
         }
     }
 
-    void unlock() {
+    void unlock()
+    {
         flag.clear(std::memory_order_release);
     }
 

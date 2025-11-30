@@ -152,8 +152,31 @@ public:
 
     void shrink_to_fit()
     {
-        if (m_cap > m_size)
-            _grow_capacity(m_size);
+        if (m_cap <= m_size)
+            return;
+        
+        if (m_size == 0) {
+            ::operator delete(p_arr);
+            p_arr = _allocate(1);
+            m_cap = 1;
+            return;
+        }
+
+        Element* new_arr = _allocate(m_size);
+        std::size_t i = 0;
+        try {
+            for (; i < m_size; ++i)
+                std::construct_at(new_arr + i, std::move_if_noexcept(p_arr[i]));
+        } catch (...) {
+            std::destroy_n(new_arr, i);
+            ::operator delete(new_arr);
+            throw;
+        }
+
+        std::destroy_n(p_arr, m_size);
+        ::operator delete(p_arr);
+        p_arr = new_arr;
+        m_cap = m_size;
     }
 
     void resize(uint64_t new_cap)

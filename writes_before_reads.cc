@@ -7,6 +7,9 @@
 // /////////////////////////////////////////////////////////////////////////
 
 #include <atomic>
+#include <condition_variable>
+#include <cstdlib>
+#include <mutex>
 #include <new>
 #include <stdexcept>
 #include <thread>
@@ -17,34 +20,71 @@ class ReaderWriterLock {
 public:
     unsigned ReaderLock()
     {
-        // Writers take priority. Spin wait
-        while (m_write_seqlock & 1) {
-            std::this_thread::yield();
-        }
-        m_reading.store(true, std::memory_order_release);
+        std::unique_lock<std::mutex> lock(m_mutex);
+        m_cv_read.wait(lock, [&]() { return !(m_writer_count or m_waiting_writers); });
+        return m_reader_count++;
     }
 
     unsigned ReaderUnlock()
     {
+        std::unique_lock<std::mutex> lock(m_mutex);
+        --m_reader_count;
+        auto remaining = m_reader_count;
+        if (!m_reader_count)
+            m_cv_write.notify_one();
+
+        return remaining;
     }
 
     void WriterLock()
     {
-        while (m_write_seqlock & 1) {
-            for (int i {}; i < 64; ++i) {
-                std::this_thread::yield();
-            }
-        }
-        ++m_write_seqlock;
+        std::unique_lock<std::mutex> lock(m_mutex);
+        ++m_waiting_writers;
+        m_cv_write.wait(lock, [&]() { return !m_writer_count and !m_reader_count; });
+        ++m_waiting_writers;
+        m_writer_count = 1;
     }
 
     void WriterUnlock()
     {
+        std::unique_lock lock(m_mutex);
+        m_writer_count = 0;
+        if (m_waiting_writers > 0)
+            m_cv_write.notify_one();
+        else
+            m_cv_read.notify_all();
     }
 
 private:
-    std::atomic<std::uint64_t> m_write_seqlock {};
-    std::atomic<std::uint64_t> m_read_seqlock {};
-    std::atomic<std::uint64_t> m_reading {};
+    std::mutex m_mutex;
+    std::condition_variable m_cv_read;
+    std::condition_variable m_cv_write;
+
+    std::uint32_t m_reader_count;
+    std::uint32_t m_writer_count;
+    std::uint32_t m_waiting_writers;
 };
+}
+#include <print>
+
+int main()
+{
+    getcracked::ReaderWriterLock lock {};
+    unsigned int readers {}, writers {};
+    std::println("hi mom");
+    lock.ReaderLock();
+    std::println("Reader locked, total: {}", ++readers);
+    lock.ReaderLock();
+    std::println("Reader locked, total: {} ", ++readers);
+    lock.ReaderUnlock();
+    std::println("Reader unlocked, total: {} ", --readers);
+    lock.ReaderUnlock();
+    std::println("Reader unlocked, total: {} ", --readers);
+    lock.WriterLock();
+    std::println("Writer locked, total: {}", ++writers);
+    lock.WriterUnlock();
+    lock.WriterLock();
+    std::println("locked thrice");
+
+    return EXIT_SUCCESS;
 }

@@ -54,6 +54,7 @@ int main()
     int x = 10;
     int y = 10;
     auto space = GetSpace(x, y, z);
+    std::cout << "these should all be negative max int\n";
     std::ranges::for_each(space[0][0], space[0][0] + z,
         [](auto el) { std::cout << el << '\n'; });
     // Properly deallocate all three dimensions
